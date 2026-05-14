@@ -1,0 +1,44 @@
+`timescale 1ns/1ps
+
+module early_exit (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire        accum_valid,         // accumulator has valid partial sum
+    input  wire [15:0] ACCUM,               // 16-bit signed accumulator value
+    input  wire        host_wr_threshold,   // host writes threshold for this layer
+    input  wire [15:0] host_threshold_in,   // threshold value from host
+    output reg  [15:0] THRESHOLD,           // per-layer threshold register
+    output wire [15:0] MAG,                 // magnitude of ACCUM (always positive)
+    output reg         EX                   // REGISTERED early exit signal
+);
+
+   
+    reg  [15:0] neg_accum_r;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            neg_accum_r <= 16'd0;
+        else
+            neg_accum_r <= (~ACCUM) + 16'd1;   // registered two's complement negate
+    end
+
+    
+    assign MAG = ACCUM[15] ? neg_accum_r : ACCUM;
+
+   
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            THRESHOLD <= 16'hFFFF;   // max on reset = no early exit by default
+        else if (host_wr_threshold)
+            THRESHOLD <= host_threshold_in;
+    end
+
+    
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            EX <= 1'b0;
+        else
+            EX <= accum_valid & (MAG > THRESHOLD);
+    end
+
+endmodule
