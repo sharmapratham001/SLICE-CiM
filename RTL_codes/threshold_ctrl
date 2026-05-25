@@ -1,0 +1,24 @@
+`timescale 1ns/1ps
+
+module threshold_lut #(
+    parameter NUM_LAYERS = 64
+)(
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire        host_wr_en,
+    input  wire [5:0]  host_layer_idx,
+    input  wire [15:0] host_threshold_in,
+    input  wire [5:0]  current_layer,
+    output wire [15:0] threshold_out,
+    output wire        host_wr_threshold
+);
+    reg [15:0] lut [0:NUM_LAYERS-1];
+    integer i;
+    initial for (i = 0; i < NUM_LAYERS; i = i + 1) lut[i] = 16'hFFFF;
+
+    always @(posedge clk)
+        if (host_wr_en) lut[host_layer_idx] <= host_threshold_in;
+
+    assign threshold_out    = lut[current_layer];
+    assign host_wr_threshold = host_wr_en;
+endmodule
