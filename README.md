@@ -24,9 +24,7 @@ without modifying the SRAM bitcell.
 
 ## Architecture
 
-<p align="center">
-<img src="docs/architecture.png" width="900">
-</p>
+
 
 The architecture consists of:
 
